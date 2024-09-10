@@ -3,7 +3,6 @@ package hexlet.code.app.service;
 import hexlet.code.app.dto.users.UserCreateDTO;
 import hexlet.code.app.dto.users.UserDTO;
 import hexlet.code.app.dto.users.UserUpdateDTO;
-import hexlet.code.app.exception.PasswordHashException;
 import hexlet.code.app.exception.ResourceNotFoundException;
 import hexlet.code.app.mapper.UserMapper;
 import hexlet.code.app.model.User;
@@ -32,12 +31,7 @@ public class UserService {
     }
 
     public UserDTO create(@Valid UserCreateDTO userData) {
-        User user;
-        try {
-            user = userMapper.map(userData);
-        } catch (Exception ex) {
-            throw new PasswordHashException("Fail to save password");
-        }
+        User user = userMapper.map(userData);
         userRepository.save(user);
         return userMapper.map(user);
     }
@@ -57,11 +51,7 @@ public class UserService {
     public UserDTO update(@Valid UserUpdateDTO userData, Long id) {
         var user = userRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
-        try {
-            userMapper.update(userData, user);
-        } catch (Exception ex) {
-            throw new PasswordHashException("Fail to save password");
-        }
+        userMapper.update(userData, user);
         userRepository.save(user);
         return userMapper.map(user);
     }

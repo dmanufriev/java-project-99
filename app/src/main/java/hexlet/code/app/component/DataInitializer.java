@@ -10,7 +10,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StartupRunner implements ApplicationRunner {
+public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private UserService userService;
@@ -18,7 +18,7 @@ public class StartupRunner implements ApplicationRunner {
     private UsersConfig usersConfig;
 
     @Autowired
-    public StartupRunner(UserService userService) {
+    public DataInitializer(UserService userService) {
         this.userService = userService;
     }
 

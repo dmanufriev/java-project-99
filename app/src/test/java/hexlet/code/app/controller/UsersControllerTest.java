@@ -1,6 +1,9 @@
 package hexlet.code.app.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hexlet.code.app.configuration.UsersConfig;
+import hexlet.code.app.dto.AuthRequest;
 import hexlet.code.app.dto.users.UserCreateDTO;
 import hexlet.code.app.dto.users.UserUpdateDTO;
 import hexlet.code.app.mapper.UserMapper;
@@ -55,13 +58,18 @@ public class UsersControllerTest {
     @Autowired
     private Faker faker;
 
+    @Autowired
+    private UsersConfig usersConfig;
+
     private User testUser;
     private UserCreateDTO createUser;
     private ArrayList<String> wrongEmails;
     private ArrayList<String> wrongPasswords;
+    private AuthRequest authRequest;
+    private static String authToken;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
         testUser = Instancio.of(User.class)
                             .ignore(Select.field(User::getId))
                             .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
@@ -80,13 +88,26 @@ public class UsersControllerTest {
         wrongPasswords = new ArrayList<>();
         wrongPasswords.add(null);
         wrongPasswords.add("12");
+
+        authRequest = new AuthRequest();
+        authRequest.setUsername(usersConfig.getAdminEmail());
+        authRequest.setPassword(usersConfig.getAdminPassword());
+        var request = post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(authRequest));
+        var result = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+        authToken = result.getResponse().getContentAsString();
     }
 
     @Test
     public void testIndex() throws Exception {
         userRepository.save(testUser);
 
-        var result = mockMvc.perform((get("/api/users")))
+        var result = mockMvc.perform((get("/api/users")
+                                        .header("Authorization", "Bearer " + authToken)
+                            ))
                             .andExpect(status().isOk())
                             .andReturn();
 
@@ -97,6 +118,7 @@ public class UsersControllerTest {
     @Test
     public void testCreate() throws Exception {
         var request = post("/api/users")
+                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(createUser));
         mockMvc.perform(request)
@@ -113,8 +135,9 @@ public class UsersControllerTest {
         for (var email : wrongEmails) {
             createUser.setEmail(email);
             var request = post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(om.writeValueAsString(createUser));
+                            .header("Authorization", "Bearer " + authToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(createUser));
             Throwable thrown = assertThrows(ServletException.class, () -> {
                 mockMvc.perform(request);
             });
@@ -127,8 +150,9 @@ public class UsersControllerTest {
         for (var password : wrongPasswords) {
             createUser.setPassword(password);
             var request = post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(om.writeValueAsString(createUser));
+                            .header("Authorization", "Bearer " + authToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(createUser));
             Throwable thrown = assertThrows(ServletException.class, () -> {
                 mockMvc.perform(request);
             });
@@ -144,6 +168,7 @@ public class UsersControllerTest {
         dto.setFirstName(JsonNullable.of("test name"));
 
         var request = put("/api/users/" + testUser.getId())
+                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(dto));
         mockMvc.perform(request)
@@ -161,6 +186,7 @@ public class UsersControllerTest {
         for (var email : wrongEmails) {
             dto.setEmail(JsonNullable.of(email));
             var request = put("/api/users/" + testUser.getId())
+                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(dto));
             Throwable thrown = assertThrows(ServletException.class, () -> {
@@ -179,8 +205,9 @@ public class UsersControllerTest {
         for (var password : wrongPasswords) {
             dto.setPassword(JsonNullable.of(password));
             var request = put("/api/users/" + testUser.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(om.writeValueAsString(dto));
+                            .header("Authorization", "Bearer " + authToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(dto));
             Throwable thrown = assertThrows(ServletException.class, () -> {
                 mockMvc.perform(request);
             });
@@ -192,7 +219,8 @@ public class UsersControllerTest {
     public void testShow() throws Exception {
         userRepository.save(testUser);
 
-        var request = get("/api/users/" + testUser.getId());
+        var request = get("/api/users/" + testUser.getId())
+                        .header("Authorization", "Bearer " + authToken);
         var result = mockMvc.perform(request)
                             .andExpect(status().isOk())
                             .andReturn();
@@ -208,7 +236,8 @@ public class UsersControllerTest {
     @Test
     public void testDestroy() throws Exception {
         userRepository.save(testUser);
-        var request = delete("/api/users/" + testUser.getId());
+        var request = delete("/api/users/" + testUser.getId())
+                        .header("Authorization", "Bearer " + authToken);
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
         assertThat(userRepository.existsById(testUser.getId())).isEqualTo(false);

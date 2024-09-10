@@ -45,6 +45,11 @@ dependencies {
 	implementation("org.mapstruct:mapstruct:1.5.5.Final")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
+	// Авторизация и аутентификация
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+	testImplementation("org.springframework.security:spring-security-test")
+
 	// Тестирование
 	testImplementation 'org.assertj:assertj-core:3.26.0'
 	testImplementation platform('org.junit:junit-bom:5.10.2')

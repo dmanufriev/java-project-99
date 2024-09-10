@@ -4,15 +4,15 @@ import hexlet.code.app.dto.users.UserCreateDTO;
 import hexlet.code.app.dto.users.UserDTO;
 import hexlet.code.app.dto.users.UserUpdateDTO;
 import hexlet.code.app.model.User;
+import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
-
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Mapper(
     // Подключение JsonNullableMapper
@@ -23,12 +23,20 @@ import java.security.spec.InvalidKeySpecException;
 )
 public abstract class UserMapper {
 
+    @Autowired
+    private PasswordEncoder encoder;
+
     @Mapping(target = "passwordDigest", source = "password")
-    public abstract User map(UserCreateDTO dto) throws NoSuchAlgorithmException, InvalidKeySpecException;
+    public abstract User map(UserCreateDTO dto);
 
     public abstract UserDTO map(User model);
 
     @Mapping(target = "passwordDigest", source = "password")
-    public abstract void update(UserUpdateDTO dto, @MappingTarget User model)
-                                throws NoSuchAlgorithmException, InvalidKeySpecException;
+    public abstract void update(UserUpdateDTO dto, @MappingTarget User model);
+
+    @BeforeMapping
+    public void encryptPassword(UserCreateDTO data) {
+        var password = data.getPassword();
+        data.setPassword(encoder.encode(password));
+    }
 }
