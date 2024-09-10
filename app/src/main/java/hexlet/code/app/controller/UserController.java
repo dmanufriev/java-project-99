@@ -6,6 +6,7 @@ import hexlet.code.app.dto.users.UserUpdateDTO;
 import hexlet.code.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,8 +28,11 @@ public class UserController {
 
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
-    public List<UserDTO> index() {
-        return userService.getAll();
+    public ResponseEntity<List<UserDTO>> index() {
+        var usersDTO = userService.getAll();
+        return ResponseEntity.ok()
+                .header("X-Total-Count", String.valueOf(usersDTO.size()))
+                .body(usersDTO);
     }
 
     @PostMapping("")
