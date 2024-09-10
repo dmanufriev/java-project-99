@@ -1,6 +1,5 @@
 package hexlet.code.app.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.app.configuration.UsersConfig;
 import hexlet.code.app.dto.AuthRequest;
