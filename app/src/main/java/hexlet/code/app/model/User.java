@@ -30,16 +30,22 @@ public class User implements UserDetails, BaseEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
+
     private String firstName;
+
     private String lastName;
+
     @NotNull(message = "Email cannot be null")
     @Email(message = "Email format is not valid")
     private String email;
+
     @NotNull(message = "Password cannot be null")
     @Length(min = 3, message = "Length of password hash must be greater than 3")
     private String passwordDigest;
+
     @CreatedDate
     private LocalDate createdAt;
+
     @LastModifiedDate
     private LocalDate updatedAt;
 

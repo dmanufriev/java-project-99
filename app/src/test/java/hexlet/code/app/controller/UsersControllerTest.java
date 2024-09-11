@@ -2,12 +2,12 @@ package hexlet.code.app.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.app.configuration.UsersConfig;
-import hexlet.code.app.dto.AuthRequest;
 import hexlet.code.app.dto.users.UserCreateDTO;
 import hexlet.code.app.dto.users.UserUpdateDTO;
 import hexlet.code.app.mapper.UserMapper;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.UserRepository;
+import hexlet.code.app.service.AuthenticationService;
 import jakarta.servlet.ServletException;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
@@ -58,17 +58,26 @@ public class UsersControllerTest {
     private Faker faker;
 
     @Autowired
+    private AuthenticationService authenticationService;
+    @Autowired
     private UsersConfig usersConfig;
+    private static String authToken;
 
     private User testUser;
     private UserCreateDTO createUser;
     private ArrayList<String> wrongEmails;
     private ArrayList<String> wrongPasswords;
-    private AuthRequest authRequest;
-    private static String authToken;
+
+    private static final String URL_BASE = "/api/users";
+    private static final String HEADER_AUTH_NAME = "Authorization";
+    private String headerAuthValue;
 
     @BeforeEach
     public void setUp() throws Exception {
+
+        authToken = authenticationService.getToken(usersConfig.getAdminEmail(), usersConfig.getAdminPassword());
+        headerAuthValue = "Bearer " + authToken;
+
         testUser = Instancio.of(User.class)
                             .ignore(Select.field(User::getId))
                             .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
@@ -76,36 +85,28 @@ public class UsersControllerTest {
                             .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
                             .supply(Select.field(User::getPasswordDigest), () -> faker.internet().password())
                             .create();
+
         createUser = Instancio.of(UserCreateDTO.class)
                             .supply(Select.field(UserCreateDTO::getFirstName), () -> faker.name().firstName())
                             .supply(Select.field(UserCreateDTO::getLastName), () -> faker.name().lastName())
                             .supply(Select.field(UserCreateDTO::getEmail), () -> faker.internet().emailAddress())
                             .supply(Select.field(UserCreateDTO::getPassword), () -> faker.internet().password())
                             .create();
+
         wrongEmails = new ArrayList<>(List.of("user@.com", "user.com", "@test.com"));
         wrongEmails.add(null);
+
         wrongPasswords = new ArrayList<>();
         wrongPasswords.add(null);
         wrongPasswords.add("12");
-
-        authRequest = new AuthRequest();
-        authRequest.setUsername(usersConfig.getAdminEmail());
-        authRequest.setPassword(usersConfig.getAdminPassword());
-        var request = post("/api/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(om.writeValueAsString(authRequest));
-        var result = mockMvc.perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-        authToken = result.getResponse().getContentAsString();
     }
 
     @Test
     public void testIndex() throws Exception {
         userRepository.save(testUser);
 
-        var result = mockMvc.perform((get("/api/users")
-                                        .header("Authorization", "Bearer " + authToken)
+        var result = mockMvc.perform((get(URL_BASE)
+                                        .header(HEADER_AUTH_NAME, headerAuthValue)
                             ))
                             .andExpect(status().isOk())
                             .andReturn();
@@ -116,8 +117,8 @@ public class UsersControllerTest {
 
     @Test
     public void testCreate() throws Exception {
-        var request = post("/api/users")
-                        .header("Authorization", "Bearer " + authToken)
+        var request = post(URL_BASE)
+                        .header(HEADER_AUTH_NAME, headerAuthValue)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(createUser));
         mockMvc.perform(request)
@@ -133,8 +134,8 @@ public class UsersControllerTest {
 
         for (var email : wrongEmails) {
             createUser.setEmail(email);
-            var request = post("/api/users")
-                            .header("Authorization", "Bearer " + authToken)
+            var request = post(URL_BASE)
+                            .header(HEADER_AUTH_NAME, headerAuthValue)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(createUser));
             Throwable thrown = assertThrows(ServletException.class, () -> {
@@ -148,8 +149,8 @@ public class UsersControllerTest {
     public void testCreateWrongPassword() throws Exception {
         for (var password : wrongPasswords) {
             createUser.setPassword(password);
-            var request = post("/api/users")
-                            .header("Authorization", "Bearer " + authToken)
+            var request = post(URL_BASE)
+                            .header(HEADER_AUTH_NAME, headerAuthValue)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(createUser));
             Throwable thrown = assertThrows(ServletException.class, () -> {
@@ -166,8 +167,8 @@ public class UsersControllerTest {
         var dto = new UserUpdateDTO();
         dto.setFirstName(JsonNullable.of("test name"));
 
-        var request = put("/api/users/" + testUser.getId())
-                        .header("Authorization", "Bearer " + authToken)
+        var request = put(URL_BASE + "/" + testUser.getId())
+                        .header(HEADER_AUTH_NAME, headerAuthValue)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(dto));
         mockMvc.perform(request)
@@ -184,8 +185,8 @@ public class UsersControllerTest {
 
         for (var email : wrongEmails) {
             dto.setEmail(JsonNullable.of(email));
-            var request = put("/api/users/" + testUser.getId())
-                        .header("Authorization", "Bearer " + authToken)
+            var request = put(URL_BASE + "/" + testUser.getId())
+                        .header(HEADER_AUTH_NAME, headerAuthValue)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(dto));
             Throwable thrown = assertThrows(ServletException.class, () -> {
@@ -203,8 +204,8 @@ public class UsersControllerTest {
 
         for (var password : wrongPasswords) {
             dto.setPassword(JsonNullable.of(password));
-            var request = put("/api/users/" + testUser.getId())
-                            .header("Authorization", "Bearer " + authToken)
+            var request = put(URL_BASE + "/" + testUser.getId())
+                            .header(HEADER_AUTH_NAME, headerAuthValue)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(dto));
             Throwable thrown = assertThrows(ServletException.class, () -> {
@@ -218,8 +219,8 @@ public class UsersControllerTest {
     public void testShow() throws Exception {
         userRepository.save(testUser);
 
-        var request = get("/api/users/" + testUser.getId())
-                        .header("Authorization", "Bearer " + authToken);
+        var request = get(URL_BASE + "/" + testUser.getId())
+                        .header(HEADER_AUTH_NAME, headerAuthValue);
         var result = mockMvc.perform(request)
                             .andExpect(status().isOk())
                             .andReturn();
@@ -228,15 +229,16 @@ public class UsersControllerTest {
         assertThatJson(body).and(
                 v -> v.node("email").isEqualTo(testUser.getEmail()),
                 v -> v.node("firstName").isEqualTo(testUser.getFirstName()),
-                v -> v.node("lastName").isEqualTo(testUser.getLastName())
+                v -> v.node("lastName").isEqualTo(testUser.getLastName()),
+                v -> v.node("createdAt").isEqualTo(testUser.getCreatedAt().toString())
         );
     }
 
     @Test
     public void testDestroy() throws Exception {
         userRepository.save(testUser);
-        var request = delete("/api/users/" + testUser.getId())
-                        .header("Authorization", "Bearer " + authToken);
+        var request = delete(URL_BASE + "/" + testUser.getId())
+                        .header(HEADER_AUTH_NAME, headerAuthValue);
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
         assertThat(userRepository.existsById(testUser.getId())).isEqualTo(false);
