@@ -42,6 +42,12 @@ public class TaskStatusService {
         return tsMapper.map(taskStatus);
     }
 
+    public TaskStatusDTO findBySlug(String slug) {
+        var taskStatus = tsRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
+        return tsMapper.map(taskStatus);
+    }
+
     public TaskStatusDTO update(@Valid TaskStatusUpdateDTO statusData, Long id) {
         var taskStatus = tsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));

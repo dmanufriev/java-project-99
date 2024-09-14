@@ -1,10 +1,10 @@
 package hexlet.code.app.component;
 
 import hexlet.code.app.configuration.UsersConfig;
-import hexlet.code.app.dto.taskStatuses.TaskStatusCreateDTO;
 import hexlet.code.app.dto.users.UserCreateDTO;
 import hexlet.code.app.exception.ResourceNotFoundException;
-import hexlet.code.app.service.TaskStatusService;
+import hexlet.code.app.model.TaskStatus;
+import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 public class DataInitializer implements ApplicationRunner {
 
-    private final List<TaskStatusCreateDTO> defaultTaskStatuses;
+    private final List<TaskStatus> defaultTaskStatuses;
 
     @Autowired
     private UserService userService;
@@ -26,22 +26,21 @@ public class DataInitializer implements ApplicationRunner {
     private UsersConfig usersConfig;
 
     @Autowired
-    private TaskStatusService tsService;
+    private TaskStatusRepository taskStatusRepository;
 
     @Autowired
-    public DataInitializer(UserService userService) {
-        this.userService = userService;
-
+    public DataInitializer() {
         defaultTaskStatuses = new ArrayList<>();
-        defaultTaskStatuses.add(new TaskStatusCreateDTO("Draft", "draft"));
-        defaultTaskStatuses.add(new TaskStatusCreateDTO("ToReview", "to_review"));
-        defaultTaskStatuses.add(new TaskStatusCreateDTO("ToBeFixed", "to_be_fixed"));
-        defaultTaskStatuses.add(new TaskStatusCreateDTO("ToPublish", "to_publish"));
-        defaultTaskStatuses.add(new TaskStatusCreateDTO("Published", "published"));
+        defaultTaskStatuses.add(new TaskStatus("Draft", "draft"));
+        defaultTaskStatuses.add(new TaskStatus("ToReview", "to_review"));
+        defaultTaskStatuses.add(new TaskStatus("ToBeFixed", "to_be_fixed"));
+        defaultTaskStatuses.add(new TaskStatus("ToPublish", "to_publish"));
+        defaultTaskStatuses.add(new TaskStatus("Published", "published"));
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+
         // Save admin as default if not exists at application start
         try {
             userService.findByEmail(usersConfig.getAdminEmail());
@@ -54,7 +53,8 @@ public class DataInitializer implements ApplicationRunner {
 
         // Save default task statuses
         defaultTaskStatuses.stream()
-                            .map(ts -> tsService.create(ts))
+                            .filter(ts -> !taskStatusRepository.findBySlug(ts.getSlug()).isPresent())
+                            .map(ts -> taskStatusRepository.save(ts))
                             .toList();
     }
 }
