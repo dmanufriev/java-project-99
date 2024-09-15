@@ -5,8 +5,10 @@ import hexlet.code.app.dto.tasks.TaskDTO;
 import hexlet.code.app.dto.tasks.TaskUpdateDTO;
 import hexlet.code.app.exception.ResourceNotFoundException;
 import hexlet.code.app.mapper.TaskMapper;
+import hexlet.code.app.model.Label;
 import hexlet.code.app.model.Task;
 import hexlet.code.app.model.User;
+import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.repository.UserRepository;
@@ -15,7 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Validated
@@ -28,6 +32,9 @@ public class TaskService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private LabelRepository labelRepository;
 
     @Autowired
     private TaskMapper taskMapper;
@@ -50,6 +57,18 @@ public class TaskService {
             assignee = userRepository.findById(taskData.getAssigneeId()).get();
         }
         task.setAssignee(assignee);
+
+        // TODO Нужно перенести бы это в маппер
+        if (null != taskData.getTaskLabelIds()) {
+            taskData.getTaskLabelIds().stream()
+                    .map(labelId -> {
+                        Label label = labelRepository.findById(labelId).get();
+                        task.getLabels().add(label);
+                        label.getTasks().add(task);
+                        return label;
+                    })
+                    .toList();
+        }
 
         taskRepository.save(task);
         return taskMapper.map(task);
@@ -79,6 +98,36 @@ public class TaskService {
                 assignee = userRepository.findById(taskData.getAssigneeId().get()).get();
             }
             task.setAssignee(assignee);
+        }
+
+        if ((null != taskData.getTaskLabelIds()) && taskData.getTaskLabelIds().isPresent()) {
+
+            // Удаляем текущую задачу из всех Labels
+            task.getLabels().stream()
+                            .map(label -> {
+                                label.getTasks().remove(task);
+                                labelRepository.save(label);
+                                return label;
+                            })
+                            .toList();
+
+            // Составляем новый список Labels для текущей задачи
+            Set<Label> newLabels = new HashSet<>();
+            for (Long labelId : taskData.getTaskLabelIds().get()) {
+                Label label = labelRepository.findById(labelId)
+                                    .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+                newLabels.add(label);
+            }
+            task.setLabels(newLabels);
+
+            // Добавляем текущую задачу во все Labels
+            task.getLabels().stream()
+                            .map(label -> {
+                                label.getTasks().add(task);
+                                labelRepository.save(label);
+                                return label;
+                            })
+                            .toList();
         }
 
         taskRepository.save(task);

@@ -4,6 +4,7 @@ import hexlet.code.app.dto.taskStatuses.TaskStatusCreateDTO;
 import hexlet.code.app.dto.taskStatuses.TaskStatusDTO;
 import hexlet.code.app.dto.taskStatuses.TaskStatusUpdateDTO;
 import hexlet.code.app.service.TaskStatusService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "Bearer Token")
 @RequestMapping("/api/task_statuses")
 public class TaskStatusController {
 

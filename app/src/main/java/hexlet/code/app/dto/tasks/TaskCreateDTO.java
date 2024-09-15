@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,4 +19,5 @@ public class TaskCreateDTO {
     private String status;
     @JsonProperty("assignee_id")
     private Long assigneeId;
+    private Set<Long> taskLabelIds;
 }

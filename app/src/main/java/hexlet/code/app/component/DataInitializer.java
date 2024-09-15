@@ -3,7 +3,9 @@ package hexlet.code.app.component;
 import hexlet.code.app.configuration.UsersConfig;
 import hexlet.code.app.dto.users.UserCreateDTO;
 import hexlet.code.app.exception.ResourceNotFoundException;
+import hexlet.code.app.model.Label;
 import hexlet.code.app.model.TaskStatus;
+import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import java.util.List;
 public class DataInitializer implements ApplicationRunner {
 
     private final List<TaskStatus> defaultTaskStatuses;
+    private final List<Label> defaultLabels;
 
     @Autowired
     private UserService userService;
@@ -29,6 +32,9 @@ public class DataInitializer implements ApplicationRunner {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
+    private LabelRepository labelRepository;
+
+    @Autowired
     public DataInitializer() {
         defaultTaskStatuses = new ArrayList<>();
         defaultTaskStatuses.add(new TaskStatus("Draft", "draft"));
@@ -36,6 +42,10 @@ public class DataInitializer implements ApplicationRunner {
         defaultTaskStatuses.add(new TaskStatus("ToBeFixed", "to_be_fixed"));
         defaultTaskStatuses.add(new TaskStatus("ToPublish", "to_publish"));
         defaultTaskStatuses.add(new TaskStatus("Published", "published"));
+
+        defaultLabels = new ArrayList<>();
+        defaultLabels.add(new Label("feature"));
+        defaultLabels.add(new Label("bug"));
     }
 
     @Override
@@ -56,5 +66,11 @@ public class DataInitializer implements ApplicationRunner {
                             .filter(ts -> !taskStatusRepository.findBySlug(ts.getSlug()).isPresent())
                             .map(ts -> taskStatusRepository.save(ts))
                             .toList();
+
+        // Save default labels
+        defaultLabels.stream()
+                        .filter(label -> !labelRepository.findByName(label.getName()).isPresent())
+                        .map(label -> labelRepository.save(label))
+                        .toList();
     }
 }
