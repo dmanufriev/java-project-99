@@ -1,7 +1,9 @@
 package hexlet.code.app.controller;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import hexlet.code.app.dto.tasks.TaskCreateDTO;
 import hexlet.code.app.dto.tasks.TaskDTO;
+import hexlet.code.app.dto.tasks.TaskParamsDTO;
 import hexlet.code.app.dto.tasks.TaskUpdateDTO;
 import hexlet.code.app.service.TaskService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,8 +33,12 @@ public class TaskController {
 
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<TaskDTO>> index() {
-        var tasksDTO = taskService.getAll();
+    public ResponseEntity<List<TaskDTO>> index(TaskParamsDTO params,
+                       @RequestParam(defaultValue = "0") @JsonProperty("_start") int start,
+                       @RequestParam(defaultValue = "10") @JsonProperty("_end") int end,
+                       @RequestParam(defaultValue = "ASC") @JsonProperty("_sort") String sort,
+                       @RequestParam(defaultValue = "index") @JsonProperty("_order") String order) {
+        var tasksDTO = taskService.getAll(params, start, end, sort, order);
         return ResponseEntity.ok()
                 .header("X-Total-Count", String.valueOf(tasksDTO.size()))
                 .body(tasksDTO);
