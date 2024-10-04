@@ -35,10 +35,8 @@ public class TaskController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<TaskDTO>> index(TaskParamsDTO params,
                        @RequestParam(defaultValue = "0") @JsonProperty("_start") int start,
-                       @RequestParam(defaultValue = "10") @JsonProperty("_end") int end,
-                       @RequestParam(defaultValue = "ASC") @JsonProperty("_sort") String sort,
-                       @RequestParam(defaultValue = "index") @JsonProperty("_order") String order) {
-        var tasksDTO = taskService.getAll(params, start, end, sort, order);
+                       @RequestParam(defaultValue = "10") @JsonProperty("_end") int end) {
+        var tasksDTO = taskService.getAll(params, start, end);
         return ResponseEntity.ok()
                 .header("X-Total-Count", String.valueOf(tasksDTO.size()))
                 .body(tasksDTO);

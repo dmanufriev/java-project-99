@@ -48,9 +48,23 @@ public class Task implements BaseEntity {
     @ManyToOne(cascade = { PERSIST }, fetch = FetchType.LAZY)
     private User assignee;
 
-    @ManyToMany(cascade = {PERSIST })
+    @ManyToMany(cascade = { PERSIST })
     private Set<Label> labels = new HashSet<>();
 
     @CreatedDate
     private LocalDate createdAt;
+
+    public void addLabel(Label newLabel) {
+        if (!labels.contains(newLabel)) {
+            labels.add(newLabel);
+            newLabel.getTasks().add(this);
+        }
+    }
+
+    public void removeLabel(Label label) {
+        if (labels.contains(label)) {
+            labels.remove(label);
+            label.getTasks().remove(this);
+        }
+    }
 }

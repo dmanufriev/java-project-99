@@ -17,7 +17,6 @@ import hexlet.code.app.specification.TaskSpecification;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class TaskService {
     @Autowired
     private TaskSpecification taskSpecification;
 
-    public List<TaskDTO> getAll(TaskParamsDTO params, int start, int end, String sort, String order) {
+    public List<TaskDTO> getAll(TaskParamsDTO params, int start, int end) {
 
         int pageSize = end - start;
         if (0 == pageSize) {
@@ -55,8 +54,7 @@ public class TaskService {
         int pageNum = start / pageSize;
 
         var specification = taskSpecification.build(params);
-        var pageTasksDTO = taskRepository.findAll(specification,
-                PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.fromString(order), sort)));
+        var pageTasksDTO = taskRepository.findAll(specification, PageRequest.of(pageNum, pageSize));
         return pageTasksDTO.get()
                 .map(taskMapper::map)
                 .toList();
@@ -80,7 +78,8 @@ public class TaskService {
                     .map(labelId -> {
                         Label label = labelRepository.findById(labelId).get();
                         task.getLabels().add(label);
-                        label.getTasks().add(task);
+                        var tasks = label.getTasks();
+                        tasks.add(task);
                         return label;
                     })
                     .toList();
@@ -102,7 +101,7 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         taskMapper.update(taskData, task);
 
-        if (taskData.getStatus().isPresent()) {
+        if ((null != taskData.getStatus()) && taskData.getStatus().isPresent()) {
             var taskStatus = taskStatusRepository.findBySlug(taskData.getStatus().get()).get();
             task.setTaskStatus(taskStatus);
         }
