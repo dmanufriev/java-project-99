@@ -8,10 +8,9 @@ import hexlet.code.app.mapper.UserMapper;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.service.AuthenticationService;
-import jakarta.servlet.ServletException;
+import hexlet.code.app.util.ModelGenerator;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
-import org.instancio.Select;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -28,7 +27,6 @@ import java.util.List;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -55,6 +53,9 @@ public class UsersControllerTest {
     private UserRepository userRepository;
 
     @Autowired
+    private ModelGenerator modelGenerator;
+
+    @Autowired
     private Faker faker;
 
     @Autowired
@@ -78,20 +79,8 @@ public class UsersControllerTest {
         authToken = authenticationService.getToken(usersConfig.getAdminEmail(), usersConfig.getAdminPassword());
         headerAuthValue = "Bearer " + authToken;
 
-        testUser = Instancio.of(User.class)
-                            .ignore(Select.field(User::getId))
-                            .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
-                            .supply(Select.field(User::getLastName), () -> faker.name().lastName())
-                            .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
-                            .supply(Select.field(User::getPasswordDigest), () -> faker.internet().password())
-                            .create();
-
-        createUser = Instancio.of(UserCreateDTO.class)
-                            .supply(Select.field(UserCreateDTO::getFirstName), () -> faker.name().firstName())
-                            .supply(Select.field(UserCreateDTO::getLastName), () -> faker.name().lastName())
-                            .supply(Select.field(UserCreateDTO::getEmail), () -> faker.internet().emailAddress())
-                            .supply(Select.field(UserCreateDTO::getPassword), () -> faker.internet().password())
-                            .create();
+        testUser = Instancio.of(modelGenerator.getUserModel()).create();
+        createUser = Instancio.of(modelGenerator.getUserCreateDTOModel()).create();
 
         wrongEmails = new ArrayList<>(List.of("user@.com", "user.com", "@test.com"));
         wrongEmails.add(null);
@@ -138,10 +127,8 @@ public class UsersControllerTest {
                             .header(HEADER_AUTH_NAME, headerAuthValue)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(createUser));
-            Throwable thrown = assertThrows(ServletException.class, () -> {
-                mockMvc.perform(request);
-            });
-            assertNotNull(thrown.getMessage());
+            mockMvc.perform(request)
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -153,10 +140,8 @@ public class UsersControllerTest {
                             .header(HEADER_AUTH_NAME, headerAuthValue)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(createUser));
-            Throwable thrown = assertThrows(ServletException.class, () -> {
-                mockMvc.perform(request);
-            });
-            assertNotNull(thrown.getMessage());
+            mockMvc.perform(request)
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -189,10 +174,8 @@ public class UsersControllerTest {
                         .header(HEADER_AUTH_NAME, headerAuthValue)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(dto));
-            Throwable thrown = assertThrows(ServletException.class, () -> {
-                mockMvc.perform(request);
-            });
-            assertNotNull(thrown.getMessage());
+            mockMvc.perform(request)
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -208,10 +191,8 @@ public class UsersControllerTest {
                             .header(HEADER_AUTH_NAME, headerAuthValue)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(dto));
-            Throwable thrown = assertThrows(ServletException.class, () -> {
-                mockMvc.perform(request);
-            });
-            assertNotNull(thrown.getMessage());
+            mockMvc.perform(request)
+                    .andExpect(status().isBadRequest());
         }
     }
 

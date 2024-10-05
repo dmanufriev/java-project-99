@@ -10,8 +10,9 @@ import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.service.AuthenticationService;
 import hexlet.code.app.service.TaskService;
-import jakarta.servlet.ServletException;
+import hexlet.code.app.util.ModelGenerator;
 import net.datafaker.Faker;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -27,8 +28,6 @@ import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -61,6 +60,9 @@ public class LabelControllerTest {
     private TaskService taskService;
 
     @Autowired
+    private ModelGenerator modelGenerator;
+
+    @Autowired
     private Faker faker;
 
     @Autowired
@@ -81,7 +83,9 @@ public class LabelControllerTest {
         authToken = authenticationService.getToken(usersConfig.getAdminEmail(), usersConfig.getAdminPassword());
         headerAuthValue = "Bearer " + authToken;
 
-        testLabel = new Label(faker.text().text(5));
+        labelRepository.deleteAll();
+
+        testLabel = Instancio.of(modelGenerator.getLabelModel()).create();
         testLabelCreateDTO = new LabelCreateDTO();
     }
 
@@ -124,10 +128,8 @@ public class LabelControllerTest {
                     .header(HEADER_AUTH_NAME, headerAuthValue)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(om.writeValueAsString(testLabelCreateDTO));
-            Throwable thrown = assertThrows(ServletException.class, () -> {
-                mockMvc.perform(request);
-            });
-            assertNotNull(thrown.getMessage());
+            mockMvc.perform(request)
+                    .andExpect(status().isBadRequest());
         }
     }
 

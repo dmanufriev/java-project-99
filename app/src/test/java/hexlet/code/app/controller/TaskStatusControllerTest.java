@@ -8,10 +8,8 @@ import hexlet.code.app.mapper.TaskStatusMapper;
 import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.service.AuthenticationService;
-import jakarta.servlet.ServletException;
-import net.datafaker.Faker;
+import hexlet.code.app.util.ModelGenerator;
 import org.instancio.Instancio;
-import org.instancio.Select;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -28,7 +26,6 @@ import java.util.List;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,7 +52,7 @@ public class TaskStatusControllerTest {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
-    private Faker faker;
+    private ModelGenerator modelGenerator;
 
     @Autowired
     private AuthenticationService authenticationService;
@@ -76,11 +73,7 @@ public class TaskStatusControllerTest {
         authToken = authenticationService.getToken(usersConfig.getAdminEmail(), usersConfig.getAdminPassword());
         headerAuthValue = "Bearer " + authToken;
 
-        taskStatus = Instancio.of(TaskStatus.class)
-                .ignore(Select.field(TaskStatus::getId))
-                .supply(Select.field(TaskStatus::getName), () -> faker.text().text(5))
-                .supply(Select.field(TaskStatus::getSlug), () -> faker.text().text(7))
-                .create();
+        taskStatus = Instancio.of(modelGenerator.getTaskStatusModel()).create();
 
         wrongTaskStatuses = new ArrayList<>();
         wrongTaskStatuses.add(new TaskStatusCreateDTO("", "test"));
@@ -124,10 +117,8 @@ public class TaskStatusControllerTest {
                     .header(HEADER_AUTH_NAME, headerAuthValue)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(om.writeValueAsString(dto));
-            Throwable thrown = assertThrows(ServletException.class, () -> {
-                mockMvc.perform(request);
-            });
-            assertNotNull(thrown.getMessage());
+            mockMvc.perform(request)
+                    .andExpect(status().isBadRequest());
         }
     }
 

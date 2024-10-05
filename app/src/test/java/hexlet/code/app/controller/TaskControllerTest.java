@@ -11,11 +11,11 @@ import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskRepository;
+import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.service.AuthenticationService;
-import jakarta.servlet.ServletException;
+import hexlet.code.app.util.ModelGenerator;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
-import org.instancio.Select;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -25,11 +25,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
-import java.util.HashSet;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,7 +52,12 @@ public class TaskControllerTest {
     @Autowired
     private TaskRepository taskRepository;
     @Autowired
+    private TaskStatusRepository taskStatusRepository;
+    @Autowired
     private LabelRepository labelRepository;
+
+    @Autowired
+    private ModelGenerator modelGenerator;
 
     @Autowired
     private Faker faker;
@@ -71,6 +73,7 @@ public class TaskControllerTest {
     private String headerAuthValue;
 
     private Task testTask;
+    private Task testTaskFilter;
     private User testAssignee;
     private TaskStatus testTaskStatus;
     private Label testLabel;
@@ -81,55 +84,88 @@ public class TaskControllerTest {
         authToken = authenticationService.getToken(usersConfig.getAdminEmail(), usersConfig.getAdminPassword());
         headerAuthValue = "Bearer " + authToken;
 
-        testAssignee = Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .ignore(Select.field(User::getCreatedAt))
-                .ignore(Select.field(User::getUpdatedAt))
-                .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
-                .supply(Select.field(User::getLastName), () -> faker.name().lastName())
-                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
-                .supply(Select.field(User::getPasswordDigest), () -> faker.internet().password())
-                .create();
+        taskRepository.deleteAll();
 
-        testTaskStatus = Instancio.of(TaskStatus.class)
-                .ignore(Select.field(TaskStatus::getId))
-                .ignore(Select.field(TaskStatus::getCreatedAt))
-                .supply(Select.field(TaskStatus::getName), () -> faker.text().text(5))
-                .supply(Select.field(TaskStatus::getSlug), () -> faker.text().text(7))
-                .create();
-
-        testLabel = Instancio.of(Label.class)
-                .ignore(Select.field(Label::getId))
-                .ignore(Select.field(Label::getCreatedAt))
-                .supply(Select.field(Label::getName), () -> faker.text().text(5))
-                .supply(Select.field(Label::getTasks), () -> new HashSet<>())
-                .create();
-
-        testTask = Instancio.of(Task.class)
-                .ignore(Select.field(Task::getId))
-                .ignore(Select.field(Task::getTaskStatus))
-                .ignore(Select.field(Task::getAssignee))
-                .supply(Select.field(Task::getName), () -> faker.text().text(5))
-                .supply(Select.field(Task::getDescription), () -> faker.text().text(7))
-                .supply(Select.field(Task::getLabels), () -> new HashSet<>())
-                .create();
-
+        testAssignee = Instancio.of(modelGenerator.getUserModel()).create();
+        testTaskStatus = Instancio.of(modelGenerator.getTaskStatusModel()).create();
+        testLabel = Instancio.of(modelGenerator.getLabelModel()).create();
+        testTask = Instancio.of(modelGenerator.getTaskModel()).create();
         testTask.setAssignee(testAssignee);
         testTask.setTaskStatus(testTaskStatus);
         testTask.addLabel(testLabel);
         taskRepository.save(testTask);
+
+        testTaskFilter = Instancio.of(modelGenerator.getTaskModel()).create();
+        testTaskFilter.setTaskStatus(Instancio.of(modelGenerator.getTaskStatusModel()).create());
+        taskRepository.save(testTaskFilter);
     }
 
     @Test
     public void testIndex() throws Exception {
 
         var result = mockMvc.perform((get(URL_BASE)
-                        .header(HEADER_AUTH_NAME, headerAuthValue)))
-                .andExpect(status().isOk())
-                .andReturn();
+                            .header(HEADER_AUTH_NAME, headerAuthValue)))
+                            .andExpect(status().isOk())
+                            .andReturn();
 
         var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray();
+        assertThatJson(body).isArray().hasSize(2);
+        assertThatJson(body.contains(testTask.getDescription()));
+    }
+
+    @Test
+    public void testIndexWithFilteredAssignee() throws Exception {
+
+        var request = get(URL_BASE + "?assigneeId=" + testAssignee.getId())
+                            .header(HEADER_AUTH_NAME, headerAuthValue);
+        var result = mockMvc.perform(request)
+                            .andExpect(status().isOk())
+                            .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray().hasSize(1);
+        assertThatJson(body.contains(testTask.getDescription()));
+    }
+
+    @Test
+    public void testIndexWithFilteredLabel() throws Exception {
+
+        var request = get(URL_BASE + "?labelId=" + testLabel.getId())
+                            .header(HEADER_AUTH_NAME, headerAuthValue);
+        var result = mockMvc.perform(request)
+                            .andExpect(status().isOk())
+                            .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray().hasSize(1);
+        assertThatJson(body.contains(testTask.getDescription()));
+    }
+
+    @Test
+    public void testIndexWithFilteredStatus() throws Exception {
+
+        var request = get(URL_BASE + "?status=" + testTaskStatus.getSlug())
+                            .header(HEADER_AUTH_NAME, headerAuthValue);
+        var result = mockMvc.perform(request)
+                            .andExpect(status().isOk())
+                            .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray().hasSize(1);
+        assertThatJson(body.contains(testTask.getDescription()));
+    }
+
+    @Test
+    public void testIndexWithFilteredTitle() throws Exception {
+
+        var request = get(URL_BASE + "?titleCont=" + testTask.getName().substring(0, 2))
+                            .header(HEADER_AUTH_NAME, headerAuthValue);
+        var result = mockMvc.perform(request)
+                            .andExpect(status().isOk())
+                            .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray().hasSize(1);
         assertThatJson(body.contains(testTask.getDescription()));
     }
 
@@ -193,10 +229,8 @@ public class TaskControllerTest {
                 .header(HEADER_AUTH_NAME, headerAuthValue)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(taskCreateDTO));
-        Throwable thrown = assertThrows(ServletException.class, () -> {
-            mockMvc.perform(request);
-        });
-        assertNotNull(thrown.getMessage());
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -209,10 +243,8 @@ public class TaskControllerTest {
                 .header(HEADER_AUTH_NAME, headerAuthValue)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(taskCreateDTO));
-        Throwable thrown = assertThrows(ServletException.class, () -> {
-            mockMvc.perform(request);
-        });
-        assertNotNull(thrown.getMessage());
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -241,14 +273,13 @@ public class TaskControllerTest {
                 .header(HEADER_AUTH_NAME, headerAuthValue)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(taskUpdateDto));
-        Throwable thrown = assertThrows(ServletException.class, () -> {
-            mockMvc.perform(request);
-        });
-        assertNotNull(thrown.getMessage());
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     public void testDestroy() throws Exception {
+
         var request = delete(URL_BASE + "/" + testTask.getId())
                 .header(HEADER_AUTH_NAME, headerAuthValue);
         mockMvc.perform(request)
