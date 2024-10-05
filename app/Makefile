@@ -1,10 +1,10 @@
 
 .PHONY: build
 build:
-	./gradlew clean
-	./gradlew build
-	./gradlew checkstyleMain
-	./gradlew test
+	./app/gradlew clean
+	./app/gradlew build
+	./app/gradlew checkstyleMain
+	./app/gradlew test
 
 report:
-	./gradlew jacocoTestReport
+	./app/gradlew jacocoTestReport
