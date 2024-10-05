@@ -38,6 +38,7 @@ dependencies {
 
 	// Database
 	runtimeOnly("com.h2database:h2:2.2.224")
+	implementation 'org.postgresql:postgresql:42.7.4'
 
 	// Частичное обновление сущности через UpdateDTO
 	implementation("org.openapitools:jackson-databind-nullable:0.2.6")			// JsonNullable
