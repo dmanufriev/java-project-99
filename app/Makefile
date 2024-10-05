@@ -1,10 +1,13 @@
 
 .PHONY: build
 build:
-	./app/gradlew clean
-	./app/gradlew build
-	./app/gradlew checkstyleMain
-	./app/gradlew test
+	@echo "Current directory: $(shell pwd)"
+	@echo "Listing files:"
+	@ls -l
+	./gradlew clean
+	./gradlew build
+	./gradlew checkstyleMain
+	./gradlew test
 
 report:
-	./app/gradlew jacocoTestReport
+	./gradlew jacocoTestReport
