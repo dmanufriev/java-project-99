@@ -1,5 +1,6 @@
 package hexlet.code.handler;
 
+import hexlet.code.exception.ActionForbiddenException;
 import hexlet.code.exception.PasswordHashException;
 import hexlet.code.exception.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -25,11 +26,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ActionForbiddenException.class)
+    public ResponseEntity<String> handleActionForbiddenException(ActionForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 }

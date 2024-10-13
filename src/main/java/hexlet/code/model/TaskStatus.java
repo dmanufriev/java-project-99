@@ -25,18 +25,21 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 public class TaskStatus implements BaseEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @NotNull
     @Length(min = 1, message = "Length of task status name must be greater than 1")
+    @Column(name = "name")
     private String name;
 
     @NotNull
-    @Column(unique = true)
     @Length(min = 1, message = "Length of task status slug must be greater than 1")
+    @Column(name = "slug", unique = true)
     private String slug;
 
     @CreatedDate
+    @Column(name = "createdAt")
     private LocalDate createdAt;
 
     public TaskStatus() {

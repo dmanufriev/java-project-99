@@ -109,8 +109,16 @@ public class TaskControllerTest {
                             .andReturn();
 
         var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray().hasSize(2);
-        assertThatJson(body.contains(testTask.getDescription()));
+        var tasks = taskRepository.findAll();
+
+        assertThatJson(body).isArray().hasSize(tasks.size());
+        for (var task : tasks) {
+            var fullDataTask = taskRepository.findByNameWithRelatedEntities(task.getName()).get();
+            var taskDTO = taskMapper.map(fullDataTask);
+            assertThatJson(body)
+                    .isArray()
+                    .contains(taskDTO);
+        }
     }
 
     @Test

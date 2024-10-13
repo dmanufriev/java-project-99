@@ -1,5 +1,6 @@
 package hexlet.code.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -29,24 +30,31 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 public class User implements UserDetails, BaseEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
+    @Column(name = "id")
     private Long id;
 
+    @Column(name = "firstName")
     private String firstName;
 
+    @Column(name = "lastName")
     private String lastName;
 
     @NotNull(message = "Email cannot be null")
     @Email(message = "Email format is not valid")
+    @Column(name = "email", unique = true)
     private String email;
 
     @NotNull(message = "Password cannot be null")
     @Length(min = 3, message = "Length of password hash must be greater than 3")
+    @Column(name = "passwordDigest")
     private String passwordDigest;
 
     @CreatedDate
+    @Column(name = "createdAt")
     private LocalDate createdAt;
 
     @LastModifiedDate
+    @Column(name = "updatedAt")
     private LocalDate updatedAt;
 
     @Override

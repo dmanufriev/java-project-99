@@ -92,7 +92,15 @@ public class TaskStatusControllerTest {
                             .andReturn();
 
         var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray();
+        var taskStatuses = taskStatusRepository.findAll();
+
+        assertThatJson(body).isArray().hasSize(taskStatuses.size());
+        for (var taskStatus : taskStatuses) {
+            var taskStatusDTO = taskStatusMapper.map(taskStatus);
+            assertThatJson(body)
+                    .isArray()
+                    .contains(taskStatusDTO);
+        }
     }
 
     @Test

@@ -3,10 +3,12 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.configuration.UsersConfig;
 import hexlet.code.dto.labels.LabelCreateDTO;
+import hexlet.code.dto.labels.LabelDTO;
 import hexlet.code.dto.labels.LabelUpdateDTO;
 import hexlet.code.mapper.LabelMapper;
 import hexlet.code.model.Label;
 import hexlet.code.repository.LabelRepository;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.service.AuthenticationService;
 import hexlet.code.service.TaskService;
@@ -54,6 +56,9 @@ public class LabelControllerTest {
     private LabelRepository labelRepository;
 
     @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
@@ -76,6 +81,7 @@ public class LabelControllerTest {
     private String headerAuthValue;
 
     private Label testLabel;
+    private Label testLabel2;
     private LabelCreateDTO testLabelCreateDTO;
 
     @BeforeEach
@@ -83,9 +89,11 @@ public class LabelControllerTest {
         authToken = authenticationService.getToken(usersConfig.getAdminEmail(), usersConfig.getAdminPassword());
         headerAuthValue = "Bearer " + authToken;
 
+        taskRepository.deleteAll();
         labelRepository.deleteAll();
 
         testLabel = Instancio.of(modelGenerator.getLabelModel()).create();
+        testLabel2 = Instancio.of(modelGenerator.getLabelModel()).create();
         testLabelCreateDTO = new LabelCreateDTO();
     }
 
@@ -93,6 +101,7 @@ public class LabelControllerTest {
     public void testIndex() throws Exception {
 
         labelRepository.save(testLabel);
+        labelRepository.save(testLabel2);
 
         var result = mockMvc.perform((get(URL_BASE)
                             .header(HEADER_AUTH_NAME, headerAuthValue)))
@@ -100,8 +109,15 @@ public class LabelControllerTest {
                             .andReturn();
 
         var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray();
-        assertThatJson(body.contains(testLabel.getName()));
+        var labels = labelRepository.findAll();
+
+        assertThatJson(body).isArray().hasSize(labels.size());
+        for (var label : labels) {
+            var labelDTO = labelMapper.map(label);
+            assertThatJson(body)
+                    .isArray()
+                    .contains(labelDTO);
+        }
     }
 
     @Test

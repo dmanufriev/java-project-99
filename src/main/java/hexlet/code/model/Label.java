@@ -29,17 +29,20 @@ public class Label implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @NotNull
     @Length(min = 3, max = 1000, message = "Length of label name must be between 3 and 1000")
-    @Column(unique = true)
+    @Column(name = "name", unique = true)
     private String name;
 
     @ManyToMany(mappedBy = "labels")
+    @Column(name = "tasks")
     private Set<Task> tasks = new HashSet<>();
 
     @CreatedDate
+    @Column(name = "createdAt")
     private LocalDate createdAt;
 
     public Label() {
