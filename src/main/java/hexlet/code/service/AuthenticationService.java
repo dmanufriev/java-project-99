@@ -1,19 +1,17 @@
 package hexlet.code.service;
 
 import hexlet.code.util.JWTUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class AuthenticationService {
 
-    @Autowired
-    private JWTUtils jwtUtils;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final JWTUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
 
     public String getToken(String username, String password) {
         var authentication = new UsernamePasswordAuthenticationToken(username, password);

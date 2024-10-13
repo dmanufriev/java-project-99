@@ -8,7 +8,6 @@ import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -21,21 +20,19 @@ public class DataInitializer implements ApplicationRunner {
 
     private final List<TaskStatus> defaultTaskStatuses;
     private final List<Label> defaultLabels;
-
-    @Autowired
     private UserService userService;
-
-    @Autowired
     private UsersConfig usersConfig;
-
-    @Autowired
     private TaskStatusRepository taskStatusRepository;
-
-    @Autowired
     private LabelRepository labelRepository;
 
-    @Autowired
-    public DataInitializer() {
+    public DataInitializer(UserService userService, UsersConfig usersConfig,
+                           TaskStatusRepository taskStatusRepository, LabelRepository labelRepository) {
+
+        this.userService = userService;
+        this.usersConfig = usersConfig;
+        this.taskStatusRepository = taskStatusRepository;
+        this.labelRepository = labelRepository;
+
         defaultTaskStatuses = new ArrayList<>();
         defaultTaskStatuses.add(new TaskStatus("Draft", "draft"));
         defaultTaskStatuses.add(new TaskStatus("ToReview", "to_review"));

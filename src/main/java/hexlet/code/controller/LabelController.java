@@ -5,7 +5,7 @@ import hexlet.code.dto.labels.LabelDTO;
 import hexlet.code.dto.labels.LabelUpdateDTO;
 import hexlet.code.service.LabelService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,10 +23,10 @@ import java.util.List;
 @RestController
 @SecurityRequirement(name = "Bearer Token")
 @RequestMapping("/api/labels")
+@RequiredArgsConstructor
 public class LabelController {
 
-    @Autowired
-    private LabelService labelService;
+    private final LabelService labelService;
 
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)

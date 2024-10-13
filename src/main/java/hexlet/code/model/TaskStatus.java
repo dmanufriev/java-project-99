@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedDate;
@@ -22,6 +23,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
+@NoArgsConstructor
 public class TaskStatus implements BaseEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
@@ -41,9 +43,6 @@ public class TaskStatus implements BaseEntity {
     @CreatedDate
     @Column(name = "createdAt")
     private LocalDate createdAt;
-
-    public TaskStatus() {
-    }
 
     public TaskStatus(String name, String slug) {
         this.name = name;

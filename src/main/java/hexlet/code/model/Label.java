@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedDate;
@@ -25,6 +26,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
+@NoArgsConstructor
 public class Label implements BaseEntity {
 
     @Id
@@ -44,9 +46,6 @@ public class Label implements BaseEntity {
     @CreatedDate
     @Column(name = "createdAt")
     private LocalDate createdAt;
-
-    public Label() {
-    }
 
     public Label(String name) {
         this.name = name;

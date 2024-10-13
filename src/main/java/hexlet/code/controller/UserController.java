@@ -5,7 +5,7 @@ import hexlet.code.dto.users.UserDTO;
 import hexlet.code.dto.users.UserUpdateDTO;
 import hexlet.code.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,10 +23,10 @@ import java.util.List;
 @RestController
 @SecurityRequirement(name = "Bearer Token")
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)

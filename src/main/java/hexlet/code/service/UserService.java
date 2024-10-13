@@ -10,7 +10,7 @@ import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.util.UserUtils;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,15 +18,12 @@ import java.util.List;
 
 @Service
 @Validated
+@AllArgsConstructor
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private UserUtils userUtils;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final UserUtils userUtils;
 
     public List<UserDTO> getAll() {
         var users = userRepository.findAll();

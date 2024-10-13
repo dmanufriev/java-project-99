@@ -3,7 +3,6 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.configuration.UsersConfig;
 import hexlet.code.dto.labels.LabelCreateDTO;
-import hexlet.code.dto.labels.LabelDTO;
 import hexlet.code.dto.labels.LabelUpdateDTO;
 import hexlet.code.mapper.LabelMapper;
 import hexlet.code.model.Label;

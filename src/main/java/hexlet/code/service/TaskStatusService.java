@@ -8,7 +8,7 @@ import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.TaskStatusRepository;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -16,12 +16,11 @@ import java.util.List;
 
 @Service
 @Validated
+@AllArgsConstructor
 public class TaskStatusService {
-    @Autowired
-    private TaskStatusRepository tsRepository;
 
-    @Autowired
-    private TaskStatusMapper tsMapper;
+    private final TaskStatusRepository tsRepository;
+    private final TaskStatusMapper tsMapper;
 
     public List<TaskStatusDTO> getAll() {
         var taskStatuses = tsRepository.findAll();
